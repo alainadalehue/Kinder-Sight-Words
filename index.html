@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Word Patch</title>
+  <meta name="description" content="Kindergarten sight word practice: look, say, spell and read.">
+  <meta name="theme-color" content="#5a24c2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Word Patch">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Andika: designed for beginning readers (single-story a and g). Fredoka: soft rounded UI. -->
+  <link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="scene" aria-hidden="true">
+    <div class="scene-sky"></div>
+    <svg class="scene-hills" viewBox="0 0 1200 260" preserveAspectRatio="none">
+      <path d="M0 70 Q300 10 620 60 T1200 40 V260 H0z" fill="#ffd94a"/>
+      <path d="M0 140 Q260 90 560 130 T1200 110 V260 H0z" fill="#ff9f2e"/>
+      <path d="M0 200 Q340 160 700 196 T1200 180 V260 H0z" fill="#78b93a"/>
+    </svg>
+    <div class="scene-hem"></div>
+  </div>
+
+  <div id="app" class="app"></div>
+
+  <dialog id="grownups" class="sheet">
+    <form method="dialog" class="sheet-inner">
+      <h2>For grown-ups</h2>
+      <div class="field" id="voiceField">
+        <label for="voiceSelect">Voice</label>
+        <select id="voiceSelect"></select>
+        <p class="hint" id="voiceHint"></p>
+      </div>
+      <div class="field">
+        <label for="rate">Talking speed</label>
+        <input id="rate" type="range" min="0.6" max="1.1" step="0.05">
+        <div class="range-labels"><span>Slow</span><span>Normal</span></div>
+      </div>
+      <div class="field check">
+        <label><input id="autoplay" type="checkbox"> Say each new word out loud first</label>
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="btn small ghost" id="testVoice">Test voice</button>
+        <button type="button" class="btn small ghost" id="resetStars">Reset stars</button>
+        <button class="btn small go" value="close">Done</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/words.js"></script>
+  <script src="audio/manifest.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

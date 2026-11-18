@@ -1,0 +1,13 @@
+{
+  "name": "Word Patch",
+  "short_name": "Word Patch",
+  "description": "Kindergarten sight word practice: look, say, spell and read.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#6a2fd1",
+  "theme_color": "#5a24c2",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
