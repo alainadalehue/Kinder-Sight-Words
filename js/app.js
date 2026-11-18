@@ -28,7 +28,7 @@
     set(k, v) { try { localStorage.setItem("wp." + k, JSON.stringify(v)); } catch {} }
   };
   let learned = store.get("learned", {});
-  const settings = Object.assign({ autoplay: true }, store.get("settings", {}));
+  const settings = Object.assign({ autoplay: true, mode: "beginner" }, store.get("settings", {}));
   const isLearned = w => !!learned[w];
   const markLearned = w => { learned[w] = true; store.set("learned", learned); };
   const setProgress = s => s.words.filter(w => isLearned(w.word)).length;
@@ -154,49 +154,128 @@
     onSwipe(card, () => nextBtn.click(), () => $app.querySelector("#prev").click());
 
     let action = () => {};
+    let flow = 0;          // bumps to cancel the guided reading flow
+    let finding = false;   // "find your word" mode on the Read step
+    const beginner = () => settings.mode !== "ready";
+    const parts = item.parts.split("|").map(p => ({ text: p.replace("*", ""), heart: p.endsWith("*") }));
+    const hasHeart = parts.some(p => p.heart);
 
+    /* ----- Spell: letters grouped by sound chunk, heart on the tricky part ----- */
     function spellRun() {
-      const tiles = [...card.querySelectorAll(".letter")];
+      const letters = [...card.querySelectorAll(".ch")];
       const wordEl = card.querySelector(".spell-word");
-      const items = [...w].map(l => [`letters/${l.toLowerCase()}`, LETTER_NAMES[l.toLowerCase()]]);
+      const items = letters.map(el => [`letters/${el.dataset.l.toLowerCase()}`, LETTER_NAMES[el.dataset.l.toLowerCase()]]);
       items.push([`words/${Voice.slug(w)}`, w]);
       return Voice.sequence(items, i => {
-        tiles.forEach((t, j) => t.classList.toggle("lit", j === i));
+        letters.forEach((el, j) => el.classList.toggle("lit", j === i));
+        card.querySelectorAll(".letter").forEach(t => t.classList.toggle("lit", !!t.querySelector(".ch.lit")));
         wordEl.classList.toggle("lit", i === items.length - 1);
-      }, 320);
+      }, 320).then(ok => {
+        const n = store.get("heartIntro", 0);
+        if (ok && hasHeart && n < 3) { store.set("heartIntro", n + 1); return Voice.then("phrases/heart", PHRASES.heart); }
+        return ok;
+      });
     }
 
-    function readRun() {
+    /* ----- Read: echo reading, then "find your word" ----- */
+    const spans = () => [...card.querySelectorAll(".sentence .w")];
+    const light = i => spans().forEach((el, j) => el.classList.toggle("lit", j === i));
+
+    function echo(queued) {
       const [text] = item.sentences[sent];
-      return Voice.sentence(w, sent, text);
+      return Voice.sentence(w, sent, text, light, queued).then(ok => { light(-1); return ok; });
+    }
+
+    function revealPic() { card.querySelector(".pic-wrap")?.classList.add("shown"); }
+
+    function readRun() {
+      ++flow;
+      return echo(false).then(ok => { if (ok) revealPic(); return ok; });
+    }
+
+    async function guided() {
+      const my = ++flow;
+      const alive = ok => ok && my === flow;
+      if (!alive(await Voice.say("phrases/listen", PHRASES.listen))) return;
+      if (!alive(await echo(true))) return;
+      if (!alive(await Voice.pause(350))) return;
+      if (!alive(await Voice.then("phrases/yourTurn", PHRASES.yourTurn))) return;
+      // a felt "finger" moves word to word at a child's reading pace
+      const n = spans().length;
+      for (let i = 0; i < n; i++) {
+        light(i);
+        if (!alive(await Voice.pause(950))) { light(-1); return; }
+      }
+      light(-1);
+      if (!alive(await Voice.pause(450))) return;
+      startFind();
+    }
+
+    function startFind() {
+      finding = true;
+      card.querySelector(".sentence").classList.add("finding");
+      card.querySelector(".find-tip").hidden = false;
+      Voice.say("phrases/find", PHRASES.find).then(ok => ok && Voice.then(`words/${Voice.slug(w)}`, w));
+    }
+
+    function found(el) {
+      finding = false;
+      card.querySelector(".sentence").classList.remove("finding");
+      card.querySelector(".find-tip").hidden = true;
+      el.classList.add("found");
+      nextBtn.classList.add("glow");
+      sparkle(el);
+      Voice.word(w).then(ok => ok && Voice.then("phrases/found", PHRASES.found));
     }
 
     function renderSentence() {
       const [text, pic] = item.sentences[sent];
-      const tokens = text.split(/(\s+)/);
-      const html = tokens.map(t => {
-        if (/^\s+$/.test(t)) return " ";
+      finding = false;
+      const html = text.split(/\s+/).map(t => {
         const bare = t.replace(/[^A-Za-z'-]/g, "");
         const isTarget = bare.toLowerCase() === w.toLowerCase();
         return `<span class="w ${isTarget ? "target" : ""}" data-w="${esc(bare)}">${esc(t)}</span>`;
-      }).join("");
+      }).join(" ");
       card.innerHTML = `
         <div class="read">
-          ${art(pic, "pic")}
-          <p class="sentence">${html}</p>
+          <div class="pic-wrap ${beginner() ? "shown" : ""}">
+            ${scene(pic)}
+            <button class="cover" aria-label="Show the picture">${art("blossom", "cover-art")}<span>Show me!</span></button>
+          </div>
+          <div>
+            <p class="sentence">${html}</p>
+            <p class="find-tip" hidden>Find <b>${esc(w)}</b>. Tap it!</p>
+          </div>
         </div>
-        <div class="pager" role="tablist">${item.sentences.map((_, i) =>
-          `<button role="tab" data-s="${i}" aria-current="${i === sent}" aria-label="Sentence ${i + 1}">${i + 1}</button>`).join("")}</div>`;
-      card.querySelectorAll(".w").forEach(el => el.onclick = () => {
-        card.querySelectorAll(".w.lit").forEach(x => x.classList.remove("lit"));
+        ${item.sentences.length > 1 ? `<div class="pager" role="tablist">${item.sentences.map((_, i) =>
+          `<button role="tab" data-s="${i}" aria-current="${i === sent}" aria-label="Sentence ${i + 1}">${i + 1}</button>`).join("")}</div>` : ""}`;
+      card.querySelector(".cover").onclick = revealPic;
+      card.querySelectorAll(".sentence .w").forEach(el => el.onclick = () => {
+        if (finding) {
+          if (el.classList.contains("target")) return found(el);
+          el.classList.add("lit", "nope");
+          setTimeout(() => el.classList.remove("lit", "nope"), 900);
+          Voice.word(el.dataset.w).then(ok => ok && Voice.then("phrases/tryAgain", PHRASES.tryAgain));
+          return;
+        }
+        ++flow;
+        light(-1);
         el.classList.add("lit");
         Voice.word(el.dataset.w).then(() => el.classList.remove("lit"));
       });
-      card.querySelectorAll(".pager button").forEach(b => b.onclick = () => { sent = +b.dataset.s; renderSentence(); });
+      card.querySelectorAll(".pager button").forEach(b => b.onclick = () => {
+        sent = +b.dataset.s; renderSentence(); startRead();
+      });
+    }
+
+    function startRead() {
+      if (beginner()) guided();
+      else { ++flow; Voice.phrase("readyRead"); }
     }
 
     function show(n) {
       step = n;
+      ++flow;
       Voice.stop();
       $app.querySelectorAll(".step").forEach((b, i) => {
         b.classList.toggle("on", i === step);
@@ -204,6 +283,7 @@
         b.setAttribute("aria-current", i === step ? "step" : "false");
       });
       card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop");
+      nextBtn.classList.remove("glow");
       if (step === 2) {
         nextBtn.className = "btn go";
         nextBtn.innerHTML = `${art("star")} I did it!`;
@@ -216,30 +296,39 @@
 
       if (step === 0) {
         card.innerHTML = `
-          ${art(SET_ART[s.id], "corner tl")}
           <div class="big-word ${w.length > 5 ? "long" : ""}">${esc(w)}</div>
           <div class="say-hint">${I.mouth} Say it out loud!</div>`;
         action = () => Voice.word(w);
         card.querySelector(".big-word").onclick = () => talking(hear, action());
         if (settings.autoplay) talking(hear, Voice.say(`phrases/look`, PHRASES.look).then(ok => ok && Voice.word(w)));
       } else if (step === 1) {
+        let li = 0;
         card.innerHTML = `
-          <div class="letters">${[...w].map((l, i) =>
-            `<button class="letter" style="--c:${LETTER_COLORS[i % LETTER_COLORS.length]}" data-l="${l}" aria-label="${l}">${esc(l)}</button>`).join("")}</div>
-          <div class="spell-word">${esc(w)}</div>`;
+          <div class="letters ${w.length >= 5 ? "many" : ""}">${parts.map((p, i) =>
+            `<button class="letter ${p.heart ? "heart" : ""} ${p.text.length > 1 ? "wide" : ""}" style="--c:${LETTER_COLORS[i % LETTER_COLORS.length]}" aria-label="${esc(p.text)}${p.heart ? ", heart part" : ""}">
+              ${p.heart ? art("heart", "heart-badge") : ""}
+              ${[...p.text].map(l => `<span class="ch" data-l="${esc(l)}" data-i="${li++}">${esc(l)}</span>`).join("")}
+            </button>`).join("")}</div>
+          <div class="spell-word">${esc(w)}</div>
+          ${hasHeart ? `<button class="heart-tip">${art("heart")} <span>The heart part is tricky. Learn it by heart!</span></button>` : ""}`;
         card.querySelectorAll(".letter").forEach(b => b.onclick = () => {
-          card.querySelectorAll(".letter").forEach(x => x.classList.remove("lit"));
+          const chs = [...b.querySelectorAll(".ch")];
+          card.querySelectorAll(".letter, .ch").forEach(x => x.classList.remove("lit"));
           b.classList.add("lit");
-          Voice.letter(b.dataset.l).then(() => b.classList.remove("lit"));
+          Voice.sequence(chs.map(c => [`letters/${c.dataset.l.toLowerCase()}`, LETTER_NAMES[c.dataset.l.toLowerCase()]]),
+            i => chs.forEach((c, j) => c.classList.toggle("lit", j === i)), 200)
+            .then(() => b.classList.remove("lit"));
         });
         card.querySelector(".spell-word").onclick = () => Voice.word(w);
+        const tip = card.querySelector(".heart-tip");
+        if (tip) tip.onclick = () => Voice.phrase("heart");
         action = spellRun;
         talking(hear, Voice.say("phrases/spell", PHRASES.spell).then(ok => ok && spellRun()));
       } else {
         sent = 0;
         renderSentence();
         action = readRun;
-        Voice.phrase("read");
+        startRead();
       }
     }
 
@@ -279,7 +368,7 @@
     const render = () => {
       const w = s.words[order[pos]].word;
       $app.querySelector("#count").textContent = `Card ${pos + 1} of ${order.length}`;
-      card.innerHTML = `${art(SET_ART[s.id], "corner br")}<div class="big-word ${w.length > 5 ? "long" : ""}">${esc(w)}</div><div class="flash-tip">Read it! Then tap to check.</div>`;
+      card.innerHTML = `<div class="big-word ${w.length > 5 ? "long" : ""}">${esc(w)}</div><div class="flash-tip">Read it! Then tap to check.</div>`;
       card.classList.remove("pop"); void card.offsetWidth; card.classList.add("pop");
       Voice.stop();
     };
@@ -332,6 +421,21 @@
     setTimeout(() => p.remove(), 3600);
   }
 
+  /* small burst of felt blossoms around an element */
+  function sparkle(el) {
+    const r = el.getBoundingClientRect();
+    const colors = ["#ffb3cf", "#5ec8ec", "#ffd94a", "#96cc54", "#f0509a"];
+    for (let i = 0; i < 8; i++) {
+      const b = document.createElement("span");
+      b.className = "spark";
+      const a = (i / 8) * Math.PI * 2;
+      b.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px;color:${colors[i % 5]};--dx:${Math.cos(a) * 70}px;--dy:${Math.sin(a) * 60}px`;
+      b.innerHTML = art(i % 3 ? "blossom" : "star");
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 900);
+    }
+  }
+
   /* ---------- Grown-ups settings ---------- */
   const dlg = document.getElementById("grownups");
   function openGrownups() {
@@ -355,6 +459,10 @@
     const rate = dlg.querySelector("#rate");
     rate.value = Voice.prefs.rate ?? 0.85;
     rate.oninput = () => { Voice.prefs.rate = +rate.value; Voice.savePrefs(); };
+    dlg.querySelectorAll('input[name="mode"]').forEach(r => {
+      r.checked = r.value === settings.mode;
+      r.onchange = () => { settings.mode = r.value; store.set("settings", settings); };
+    });
     const auto = dlg.querySelector("#autoplay");
     auto.checked = settings.autoplay;
     auto.onchange = () => { settings.autoplay = auto.checked; store.set("settings", settings); };

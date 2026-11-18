@@ -228,9 +228,138 @@
       <circle cx="50" cy="50" r="9" ${stitch("#e08b0a", 1.5)}/>`
   };
 
+  /* ---------- felt people ---------- */
+  const PEOPLE = {
+    // the reader ("I", "me"): curly puffs and a purple striped sweater
+    kid:  { skin: "#c68863", hair: "#3b2416", style: "curly",    top: "#7b3fe0", stripe: "#ffb3cf", pants: "#5ec8ec" },
+    girl: { skin: "#8d5a3b", hair: "#1f1310", style: "pigtails", top: "#f0509a", stripe: "#ffd94a", pants: "#7b3fe0" },
+    boy:  { skin: "#f1c7a1", hair: "#c4702a", style: "short",    top: "#4aa9e0", stripe: "#fff",    pants: "#78b93a" },
+    mom:  { skin: "#a86b48", hair: "#2a1a12", style: "long",     top: "#ff9f2e", stripe: "#ffd94a", pants: "#7b3fe0" },
+    dad:  { skin: "#e0ac7e", hair: "#5a3a22", style: "dad",      top: "#78b93a", stripe: "#ffd94a", pants: "#4a5fa8" }
+  };
+  function hairBack(p) {
+    if (p.style === "long") return `<path d="M33 27 q-3 22 3 30 h28 q6 -8 3 -30 q-2 -18 -17 -18 q-15 0 -17 18z" fill="${p.hair}"/>`;
+    if (p.style === "pigtails") return `<circle cx="30" cy="25" r="7" fill="${p.hair}"/><circle cx="70" cy="25" r="7" fill="${p.hair}"/>
+      <path d="M33 19 l-4 -5 l2 8z M67 19 l4 -5 l-2 8z" fill="#ffd94a"/>`;
+    return "";
+  }
+  function hairFront(p) {
+    switch (p.style) {
+      case "curly": return [[37, 19, 7], [43, 13, 7], [51, 11, 7], [59, 13, 7], [64, 20, 6], [35, 26, 4.5], [65, 27, 4.5]]
+        .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${p.hair}"/>`).join("");
+      case "short": return `<path d="M35 26 q-1 -17 15 -17 q16 0 15 17 q-5 -8 -12 -7 q-2 -3 -6 0 q-7 -1 -12 7z" fill="${p.hair}"/>`;
+      case "dad": return `<path d="M35 24 q0 -15 15 -15 q15 0 15 15 q-6 -5 -15 -5 q-9 0 -15 5z" fill="${p.hair}"/><path d="M35 25 v6 M65 25 v6" stroke="${p.hair}" stroke-width="3" stroke-linecap="round"/>`;
+      case "pigtails": return `<path d="M35 26 q0 -17 15 -17 q15 0 15 17 q-7 -6 -15 -8 q-8 2 -15 8z" fill="${p.hair}"/>`;
+      case "long": return `<path d="M35 27 q0 -18 15 -18 q15 0 15 18 q-4 -9 -15 -10 q-11 1 -15 10z" fill="${p.hair}"/>`;
+    }
+    return "";
+  }
+  function person(p) {
+    return `
+      ${hairBack(p)}
+      <rect x="40" y="72" width="8" height="18" rx="3" fill="${p.pants}"/><rect x="52" y="72" width="8" height="18" rx="3" fill="${p.pants}"/>
+      <ellipse cx="43" cy="91" rx="6" ry="3.5" fill="${INK}"/><ellipse cx="57" cy="91" rx="6" ry="3.5" fill="${INK}"/>
+      <path d="M35 47 q-9 8 -11 21 M65 47 q9 8 11 21" stroke="${p.top}" stroke-width="7.5" stroke-linecap="round" fill="none"/>
+      <circle cx="24" cy="70" r="4.2" fill="${p.skin}"/><circle cx="76" cy="70" r="4.2" fill="${p.skin}"/>
+      <path d="M34 44 q16 -6 32 0 l4 30 q-20 5 -40 0z" fill="${p.top}"/>
+      <path d="M31.5 58 h37 M31 63 h38" stroke="${p.stripe}" stroke-width="2.6"/>
+      <path d="M36 47 q14 -5 28 0 l3.4 24 q-17 4 -34.8 0z" ${stitch("rgba(0,0,0,.25)", 1.2)}/>
+      <circle cx="50" cy="28" r="15" fill="${p.skin}"/>
+      ${hairFront(p)}
+      ${eye(44.5, 29)}${eye(55.5, 29)}${cheek(40, 35)}${cheek(60, 35)}${smile(50, 35, 4)}`;
+  }
+  for (const k in PEOPLE) ART[k] = person(PEOPLE[k]);
+
+  /* ---------- more felt pieces ---------- */
+  Object.assign(ART, {
+    fox: `
+      <path d="M20 46 L22 12 L42 30z M80 46 L78 12 L58 30z" fill="#ff7a1f"/>
+      <path d="M26 36 L27 22 L36 31z M74 36 L73 22 L64 31z" fill="${INK}" opacity=".7"/>
+      <path d="M14 44 Q50 18 86 44 Q80 70 50 88 Q20 70 14 44z" fill="#ff8a2a"/>
+      <path d="M20 46 Q50 25 80 46 Q75 66 50 82 Q25 66 20 46z" ${stitch("#b9520a")}/>
+      <path d="M22 54 Q36 56 44 68 Q48 80 50 88 Q30 76 22 54z M78 54 Q64 56 56 68 Q52 80 50 88 Q70 76 78 54z" fill="#fff4e0"/>
+      ${eye(38, 50)}${eye(62, 50)}
+      <ellipse cx="50" cy="80" rx="5" ry="3.6" fill="${INK}"/>`,
+
+    egg: `
+      <path d="M50 10 C72 10 84 46 84 62 C84 82 68 92 50 92 C32 92 16 82 16 62 C16 46 28 10 50 10z" fill="#fff6e0"/>
+      <path d="M50 16 C68 16 78 46 78 62 C78 78 66 86 50 86 C34 86 22 78 22 62 C22 46 32 16 50 16z" ${stitch("#d9c49a")}/>
+      ${knot(40, 44, "#ffb3cf", 3)}${knot(60, 60, "#5ec8ec", 3)}${knot(46, 72, "#ffd94a", 3)}`,
+
+    mud: `
+      <ellipse cx="50" cy="50" rx="48" ry="13" fill="#8a5634"/>
+      <ellipse cx="50" cy="50" rx="44" ry="10" ${stitch("#5e3820", 1.4)}/>
+      <ellipse cx="34" cy="48" rx="8" ry="3" fill="#a56b44"/><ellipse cx="66" cy="53" rx="9" ry="3" fill="#a56b44"/>`,
+
+    tub: `
+      ${[[16, 36, 6], [24, 28, 8], [30, 37, 5], [72, 36, 5], [78, 28, 8], [86, 36, 6]].map(([x, y, r]) =>
+        `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#bfe9fa" stroke-width="2"/>`).join("")}
+      <rect x="8" y="40" width="84" height="8" rx="4" fill="#d4b6ff"/>
+      <path d="M12 46 h76 q-2 30 -24 32 h-28 q-22 -2 -24 -32z" fill="#fff"/>
+      <path d="M17 50 h66 q-3 22 -21 24 h-24 q-18 -2 -21 -24z" ${stitch("#9aa6c8")}/>
+      <path d="M24 76 l-4 12 M76 76 l4 12" stroke="#ffd94a" stroke-width="5" stroke-linecap="round"/>
+      ${knot(30, 60, "#ffb3cf", 2.6)}${knot(50, 64, "#5ec8ec", 2.6)}${knot(70, 60, "#ffd94a", 2.6)}`,
+
+    pen: `
+      ${[6, 30, 54, 78].map(x => `<rect x="${x}" y="40" width="9" height="34" rx="3" fill="#c98a54"/>`).join("")}
+      <rect x="2" y="47" width="96" height="6" rx="3" fill="#b07440"/>
+      <rect x="2" y="62" width="96" height="6" rx="3" fill="#b07440"/>`,
+
+    run: `
+      <path d="M90 34 H40 M96 50 H30 M88 66 H46" stroke="#a98be6" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 8"/>
+      <circle cx="22" cy="70" r="7" fill="#efe4ff"/><circle cx="12" cy="62" r="5" fill="#efe4ff"/>`,
+
+    hop: `
+      <path d="M10 70 q10 -24 20 0 M70 70 q10 -24 20 0" fill="none" stroke="#6a2fd1" stroke-width="4" stroke-linecap="round" stroke-dasharray="5 5"/>
+      <ellipse cx="50" cy="74" rx="16" ry="3" fill="#2f6e22" opacity=".35"/>`,
+
+    heart: `<path d="M50 86 C20 64 10 48 14 32 C18 16 40 12 50 30 C60 12 82 16 86 32 C90 48 80 64 50 86z" fill="#e5394b"/>
+      <path d="M50 76 C26 58 19 46 22 34 C25 23 41 21 50 36 C59 21 75 23 78 34 C81 46 74 58 50 76z" ${stitch("#fff", 2.4)}/>`
+  });
+
+  /* Composite pieces built from the parts above. */
+  const nest = (name, x, y, w, extra = "") => `<svg x="${x}" y="${y}" width="${w}" height="${w}" viewBox="0 0 100 100" overflow="visible" ${extra}>${ART[name]}</svg>`;
+  for (const k in PEOPLE) ART[k + "+hat"] = ART[k] + nest("hat", 25, -17, 50);
+  ART.catBox = nest("cat", 24, 0, 52) + `<g transform="translate(0 12) scale(1 .88)">${ART.box}</g>`;
+  ART.pigMud = nest("pig", 18, 14, 64) + nest("mud", 0, 34, 100) +
+    `${knot(20, 76, "#8a5634", 3)}${knot(82, 74, "#8a5634", 2.6)}${knot(74, 66, "#8a5634", 2)}`;
+  ART.kidTub = nest("kid", 22, -6, 56) + nest("tub", 0, 10, 100) +
+    `<path d="M14 30 q3 5 0 7 q-3 -2 0 -7z M86 26 q3 5 0 7 q-3 -2 0 -7z" fill="#5ec8ec"/>`;
+  ART.hug = nest("heart", 40, -6, 20) + nest("mom", -2, 0, 100) + nest("kid", 34, 18, 76);
+  // bed with a sleepy kid tucked in
+  ART.nap = ART.bed
+    .replace(`<path d="M20 58 Q40 50 86 58 L86 72 L20 72z" fill="#ff8fb8"/>`,
+      `<circle cx="32" cy="47" r="9" fill="#c68863"/>
+       ${[[25, 42, 4], [30, 38, 4.5], [36, 38, 4.5], [40, 43, 3.5]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#3b2416"/>`).join("")}
+       ${sleepy(29, 48)}${sleepy(36, 48)}
+       <path d="M20 56 Q40 50 86 56 L86 72 L20 72z" fill="#ff8fb8"/>`);
+
   window.art = function (name, cls = "") {
     const body = ART[name] || ART.star;
-    return `<svg class="art ${cls}" viewBox="0 0 100 100" aria-hidden="true" focusable="false">${body}</svg>`;
+    return `<svg class="art ${cls}" viewBox="0 0 100 100" overflow="visible" aria-hidden="true" focusable="false">${body}</svg>`;
+  };
+
+  /* A sentence picture: felt pieces on a little sky + hill patch. */
+  let sceneId = 0;
+  window.scene = function (spec, cls = "") {
+    const items = spec.trim().split(/\s+/).map(tok => {
+      const [name, nums] = tok.split(":");
+      const [x, y, s, f] = nums.split(",");
+      const size = +s, left = +x - size / 2, top = +y - size / 2;
+      const inner = nest(name, left, top, size);
+      return f === "f" ? `<g transform="translate(${2 * +x} 0) scale(-1 1)">${inner}</g>` : inner;
+    }).join("");
+    const id = "sc" + (++sceneId);
+    return `<svg class="scene-pic ${cls}" viewBox="0 0 160 100" aria-hidden="true" focusable="false">
+      <defs><clipPath id="${id}"><rect width="160" height="100" rx="14"/></clipPath></defs>
+      <g clip-path="url(#${id})">
+        <rect width="160" height="100" fill="#efe4ff"/>
+        <path d="M0 84 Q50 74 100 82 T160 78 V100 H0z" fill="#96cc54"/>
+        <path d="M0 88 Q50 79 100 86 T160 83" ${stitch("#5e9a2c", 1.4)}/>
+        ${items}
+      </g>
+      <rect x="3" y="3" width="154" height="94" rx="11" ${stitch("#b9a2e6", 1.4)}/>
+    </svg>`;
   };
   window.ART_NAMES = Object.keys(ART);
 })();

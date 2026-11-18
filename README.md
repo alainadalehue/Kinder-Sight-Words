@@ -9,19 +9,30 @@ It works on phones, tablets and laptops, and you can add it to an iPad home scre
 1. **Home**: six felt "patches", one for each six-week set, shown in order. The next set to work on has an **Up next!** ribbon. Stars show progress.
 2. **A set**: **Let's learn!** starts at the first word that has no star yet. **Flash cards** is quick review. Tapping any word tile jumps straight to that word.
 3. **Each word has 3 steps**, shown as icons at the top:
-   - 👁 **Look & say**: a big flash card. The app says the word, then the child says it.
-   - 🔤 **Spell**: letter tiles light up one at a time while each letter is spoken, then the whole word. The child can tap any letter to hear it.
-   - 📖 **Read**: two short sentences with a picture. The sight word is highlighted, and the child can tap any word to hear it. The pink button reads the whole sentence.
+   - 👁 **Look & say**: a big flash card with no picture, so the child's eyes stay on the letters. The app says the word, then the child says it.
+   - 🔤 **Spell**: letters are grouped by sound, and a felt ♥ marks the *heart part*, the bit that doesn't sound out the expected way (th + ♥e in "the"). The letters light up as they're spoken, and tapping a tile repeats it. This "heart word" approach helps children store sight words by linking sounds to letters instead of memorizing shapes.
+   - 📖 **Read**: two short sentences with a felt picture that shows the whole sentence (a big pig *and* a little bug).
    - **I did it!** awards a star and moves on to the next word.
+
+### Reading help (grown-up setting)
+
+- **Beginner** (default): the picture shows right away. The app reads the sentence while each word lights up (**echo reading**), says "Now you read it!", and moves a highlight word by word at a child's pace. Then it asks the child to **find the sight word** and tap it. Tapping a wrong word says that word and "Try again!"
+- **Ready to read**: the child reads first. The picture stays under a felt flap until they tap "Show me!" or the speaker. This way the picture confirms the meaning instead of being used to guess. Any word can be tapped for help.
 
 Navigation: the big pink speaker button means "hear it", the arrows go back and forward, and swiping the card also works.
 On a laptop you can use the ← → keys and the space bar.
 
-The sentences build on each other: each one uses only sight words from its own set or an
-earlier set, plus easy decodable words with a picture (cat, sun, big, hop…).
-No sight words outside the sheet are introduced.
+### How the sentences are written
 
-**Grown-up settings** are behind the gear icon on the home screen: voice, talking speed,
+Each word has two sentences (in `js/words.js`). A check run on every sentence confirms that it uses:
+
+- only sight words from its own set or an earlier set, so earlier words keep coming back;
+- otherwise only short words a kindergartner can sound out (cat, pig, hen, sun, big, hot, hop, ran, sat…) and Mom / Dad;
+- 3–8 words, with repeated patterns early on ("I see a ___.", "I have a ___.").
+
+No sight words outside the sheet are introduced, and no names are used.
+
+**Grown-up settings** are behind the gear icon on the home screen: voice, talking speed, Reading help,
 whether new words are spoken automatically, and a button to reset stars.
 
 ## Running it
@@ -58,8 +69,8 @@ and the voice can't be exported.
    ELEVENLABS_API_KEY=your_key ELEVENLABS_VOICE_ID=your_voice_id node scripts/generate-audio.mjs
    ```
 
-   This creates about 290 short MP3s (sight words, every word used in a sentence, letters,
-   sentences and praise phrases) and updates `audio/manifest.js`. Commit the `audio/` folder.
+   This creates about 280 short MP3s (sight words, every word used in a sentence, letters,
+   sentences, and spoken prompts such as "Now you read it!") and updates `audio/manifest.js`. Commit the `audio/` folder.
    The app then uses your voice everywhere, with no API key in the app and no per-use cost.
 
 Useful flags: `--list` (show every clip and its text), `--only=letters`, `--force` (re-make clips).
@@ -75,8 +86,8 @@ recording the letters yourself and generating everything else.
 
 | Path | What it is |
 | --- | --- |
-| `js/words.js` | The word sets, sentences, phrases and letter names (edit sentences here) |
-| `js/art.js` | Felt-style SVG illustrations |
+| `js/words.js` | The word sets, heart parts, sentences + picture layouts, phrases and letter names |
+| `js/art.js` | Felt-style SVG illustrations, people, and the sentence picture builder |
 | `js/audio.js` | Voice: recorded clips first, then the device voice |
 | `js/app.js` | Screens and navigation |
 | `css/styles.css` | Look and feel |
